@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "esnext", "deno.ns"]
+  },
+  "tasks": {
+    "build": "deno run --allow-read --allow-net ./build.ts",
+    "start": "deno run --allow-net --allow-read ./server.ts"
+  },
+  "imports": {
+  }
+}
