@@ -1,135 +1,111 @@
-document.body.style.fontFamily = "Arial, sans-serif";
-document.body.style.margin = "0";
-document.body.style.scrollBehavior = "smooth";
-
-const DEFAULT_STYLE = {
-        decoration: "none",
-        color: "black",
-        margin_left: 30,
-    };
-const DEFAULT_LINK = {
-        id: undefined,
-        content: undefined,
-        style: DEFAULT_STYLE,
-    };
-
-function Nav(params) {
-    const defaults = {
-        bg_color: "#f2f2f2",
-        position: "sticky",
-        padding: 10,
-        top: 0,
-    };
-
-    Object.assign(this, defaults, params);
-
-    this.init = function () {
-        const nav = document.body.appendChild(document.createElement("nav"));
-        nav.appendChild(document.createElement("ul"));
-
-        nav.style.backgroundColor = this.bg_color;
-        nav.style.position = this.position;
-        nav.style.padding = `${this.padding}px`;
-        nav.style.top = Number(this.top).toString();
-    };
-    this.init();
-};
-
-Nav.prototype.createLink = function(params) {
-        const obj = Object.assign({}, {...DEFAULT_LINK, ...params});
-        obj.style = Object.assign({}, {...DEFAULT_STYLE, ...obj.style});
-
-        const link = document.querySelector("nav>ul")
-            .appendChild(document.createElement("li"))
-            .appendChild(document.createElement("a"));
-
-        link.href = `#${obj.id}`;
-        link.textContent = obj.content;
-        link.style.textDecoration = obj.style.decoration;
-        link.style.color = obj.style.color;
-        link.style.marginLeft = `${obj.style.margin_left}px`;
-    };
-
-Nav.prototype.createLinks = function(array) {
-        for (let i = 0; i < array.length; i++) {
-            this.createLink(array[i]);
-        }
-    };
-
-function Section(params) {
-    const defaults = {
-        id: undefined,
-        padding: [100, 20],
-        borderBottom: "1px solid #ccc",
-        title: null,
-        content: null
-    };
-    Object.assign(this, defaults, params || {});
-
-    this.init = function () {
-        const section = document.body.appendChild(document.createElement("section"));
-        section.id = this.id;
-        section.style.padding = `${this.padding[0]}px ${this.padding[1]}px`;
-        section.style.borderBottom = this.borderBottom; // Fixed typo
-        this.element = section;
-    };
-    this.init();
+function buffer(view) {
+    this.view = view;
+    this.buf = [];
+    this.tags = [];
+    this.links = [];
 }
 
-Section.prototype.createTitle = function (id, title) {
-    const titleText = title !== undefined ? title : this.title || "Untitled";
-    const h2 = document.getElementById(id).appendChild(document.createElement("h2"));
-    h2.textContent = titleText;
-};
-
-Section.prototype.createParagraph = function (id, content) {
-    const contentText = content !== undefined ? content : this.content || "No content";
-    const p = document.getElementById(id).appendChild(document.createElement("p"));
-    p.textContent = contentText;
-};
-
-Section.prototype.createSectionWithContent = function (params) {
-    const defaults = {
-        id: undefined,
-        padding: [100, 20],
-        borderBottom: "1px solid #ccc",
-        title: null,
-        content: null
-    };
-    const obj = Object.assign({}, defaults, params || {});
-
-    const section = new Section(obj);
-
-    if (obj.title !== null) {
-        section.createTitle(obj.id, obj.title);
+function view(width, height) {
+    this.width = width;
+    this.height = height;
+    this.buffer = new buffer(this);
+    this.location = new location(this, "main");
+}
+function location(view, location) {
+    this.view = view;
+    this.loc = location;
+    this.hasBeenInitialized = function() {
+        const element = document.getElementById(location);
+        if(element != null){
+            return true;
+        }
+        return false;
     }
-    if (obj.content !== null) {
-        section.createParagraph(obj.id, obj.content);
+}
+
+function tag(tag = "span", attr, str, x) {
+    this.tag = tag;
+    this.class = attr;
+    this.str = str;
+    this.x = x;
+}
+
+location.prototype.createInstance = function() {
+    if (!this.hasBeenInitialized()){
+        const element = document.body.appendChild(document.createElement("pre"));
+        element.setAttribute("id", this.location);
+        return true;
     }
-
-    return section;
-};
-
-Section.prototype.createSectionsWithContent = function (array) {
-    for (let i = 0; i < array.length; i++) {
-        const sectionParams = {
-            id: array[i].id,
-            title: array[i].content,
-            content: `This is the ${array[i].content} section.`
-        };
-        this.createSectionWithContent(sectionParams);
+    return false;
+}
+buffer.prototype.addTag = function(tag, y) {
+    if(y < 0 || y >= this.height)
+        return false;
+    if(tag.x < 0 || tag.x > this.view.width)
+        return false;
+    if(this.tags[y].length == 0) {
+        this.tags[y].push(tag);
+        return true;
     }
-};
+    else{
+        for(let i = 0; i < this.tags[y].length; i++){
+            if(tag.x > this.tags[y][i].x){
+                this.tags[y].splice(i,0,tag);
+                return true;
+            }
+        }
+    }
+    this.tags[y].push(tag);
+    return true;
+}
+buffer.prototype.write = function(str, x, y) {
+    let indexFirst = 0;
+    let indexLast = str.length;
+    // outofbounds check
+    // check for width and height
+    if (y < 0 || y >= view.height)
+        return false;
 
-const navbar = new Nav();
+    if (x + indexLast >= view.width)
+        indexLast -= (x + indexLast - view.width);
 
-const arr = [
-    { id: "home", content: "Kezdőlap" },
-    { id: "services", content: "Szolgáltatások" },
-    { id: "about", content: "Rólunk" },
-    { id: "contact", content: "Kapcsolat" }
-];
+    if (x < 0)
+        indexFirst = -x;
 
-navbar.createLinks(arr);
-const section = new Section();
-section.createSectionsWithContent(arr);
+    if (indexLast < 0 || indexFirst >= str.length)
+        return false;
+
+    for (let i = indexFirst; i < indexLast; i++) {
+        this.buf[y] = this.buf[y].slice(0, x) + str[i] + this.buf[y].slice(x + 1);
+    }
+}
+
+buffer.prototype.writeArray = function(arr, x, y) {
+    for(let i = 0; i < arr.length; i++) {
+        this.write(arr[i], x, y + i)
+    }
+}
+
+buffer.prototype.flush = function() {
+    let cloned_buf = [];
+
+    if (this.tags.length == 0) {
+        return this.buf.join("\n");
+    }
+    else {
+        cloned_buf = this.buf.slice(0);
+
+        for(let y = 0; y < this.view.height; y++) {
+            for(let x = 0; x < this.tags[y].length; x++){
+                cloned_buf[y] = cloned_buf[y].splice(this.tags[y][x].x, 0, this.tags[y][x]);
+            }
+        }
+        return cloned_buf;
+    }
+}
+view.prototype.render = function() {
+    this.location.createElement();
+    // fetching the cloned_buf tags and creating them.
+    // rather than clearing the hole screen or overwriting constans elements like texts that havent been modified, only the modified regions should be overwritten.
+
+}
