@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["js/main.ts"],
-  "sourcesContent": ["import { View, view } from \"@view\";\nimport { buffer, Buffer } from \"@buffer\";\nimport { viewport, Viewport } from \"@viewport\";\nimport { tag, Tag } from \"@tag\";\n\nconst view: View= new view(50, 50);\nconst arr = [\n\" ___________________________\",\n\"|:''''''''''''''''''''''''':|\",\n\"|:          _____          :|\",\n\"|:         /     \\         :|\",\n\"|_________(_[   ]_)_________|\",\n\"|:\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8\\_____/\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8\u00A8:|\",\n\"|:                         :|\",\n\"|:                         :|\",\n\"|:  ___    .-\\\"\\\"\\\"-.    ___  :|\",\n\"|:  \\  \\  /\\ \\ \\ \\\\  /  /  :|\",\n\"|:   }  \\/\\ \\ \\ \\ \\\\/  {   :|\",\n\"|:   }  /\\ \\ \\ \\ \\ /\\  {   :|\",\n\"|:  /__/  \\ \\ \\ \\ /  \\__\\  :|\",\n\"|:         '-...-'         :|\",\n\"|:.........................:|\",\n\"|___________________________|\",\n]\nview.buffer.writeArray(arr, 0, 0);\nview.render()\n"],
-  "mappings": ";;AAKA,MAAM,OAAY,IAAI,KAAK,IAAI,EAAE;AACjC,MAAM,MAAM;AAAA,IACZ;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,IACA;AAAA,EACA;AACA,OAAK,OAAO,WAAW,KAAK,GAAG,CAAC;AAChC,OAAK,OAAO;",
-  "names": []
-}
