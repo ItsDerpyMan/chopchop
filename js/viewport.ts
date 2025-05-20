@@ -2,12 +2,12 @@ import { View } from "./view.ts";
 
 // Type for Location properties
 export type Viewport = {
-    new (view: View): Viewport;
+    new (view: View, loc: string): Viewport;
     view: View;
     location: string;
     hasBeenInitialized: () => boolean;
-    createInstance(): boolean;
-    getInstance(): Element | null;
+    createInstance(this: Viewport): boolean;
+    getInstance(this: Viewport): Element | null;
 };
 
 // Location constructor
@@ -38,3 +38,4 @@ Viewport.prototype.getInstance = function(this: Viewport): Element | null {
     }
     return document.getElementById(this.location);
 }
+export const viewport: Viewport = Viewport as any;

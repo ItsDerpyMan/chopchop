@@ -1,19 +1,19 @@
 import { View } from "./view.ts";
-import { Tag } from "./tag.ts";
-import { Links } from "./links.ts";
+import { tag, Tag } from "./tag.ts";
+//import { Links } from "./links.ts";
 
 export type Buffer = {
     new (view: View): Buffer;
     view: View;
     buf: string[];
     tags: Tag[][];
-    links: string[];
+    // links: string[];
     init: () => void;
     resize(newWidth: number, newHeight: number): boolean;
     addTag(this: Buffer, tag: Tag, y: number): boolean;
     write(this: Buffer, str: string, x: number, y: number): boolean;
     writeArray(this: Buffer, arr: string[], x: number, y: number): void;
-    flush(this: Buffer): string[];
+    flush(this: Buffer): string;
 };
 
 // Buffer constructor
@@ -21,11 +21,12 @@ function Buffer(this: Buffer, view: View) {
     this.view = view;
     this.buf = [];
     this.tags = [];
-    this.links = [];
+    //this.links = [];
     this.init = (width: number = 0, height: number = 0) => {
         this.resize(width, height);
     }
-}
+};
+
 Buffer.prototype.resize = function(newWidth: number, newHeight: number): boolean {
     const oldWidth = this.view.width;
     const oldHeight = this.view.height;
@@ -74,6 +75,17 @@ Buffer.prototype.resize = function(newWidth: number, newHeight: number): boolean
 
 
 // Buffer prototype methods
+Buffer.prototype.addAsciiButton = function(x1: number, x2: number, y: number, Attr: string = ""): boolean {
+    return this.addTwoTags(x1, x2, y, "span class=\"asciiButton " + Attr + "\">", "</span");
+}
+Buffer.prototype.addBold = function(x1: number, x2: number, y: number): boolean {
+    return this.addTwoTags(x1, x2, y, "<b>", "</b>");
+}
+Buffer.prototype.addTwoTags = function(x1: number, x2: number, y: number, tag1: string, tag2: string): boolean {
+    if(this.addTag(new tag(x1, tag1), y) == false || this.addTag(new tag(x2, tag2), y) == false)
+        return false;
+    return true;
+}
 Buffer.prototype.addTag = function(this: Buffer, tag: Tag, y: number): boolean {
     if (y < 0 || y >= this.view.height) {
       return false;
@@ -129,25 +141,21 @@ Buffer.prototype.writeArray = function(this: Buffer, arr: string[], x: number, y
     }
 };
 
-Buffer.prototype.flush = function(this: Buffer):  string[] {
+Buffer.prototype.flush = function(this: Buffer): string {
     let cloned_buf: string[] = [];
 
-    if (this.tags.length === 0) {
-      return this.buf
+    if (this.tags.length == 0) {
+      return this.buf.join("\n");
     }
     else {
       cloned_buf = this.buf.slice(0);
 
       for (let y = 0; y < this.view.height; y++) {
-        if (this.tags[y]) {
           for (let x = 0; x < this.tags[y].length; x++) {
-            cloned_buf[y] = (cloned_buf[y] || "").slice(0, this.tags[y][x].x) +
-              this.tags[y][x].str + (cloned_buf[y] || "").slice(this.tags[y][x].x);
+            cloned_buf[y] = this.tags[y][x].insert(cloned_buf[y]);
           }
-        }
       }
-      return cloned_buf;
+      return cloned_buf.join("\n");
     }
 };
-
-
+export const buffer: Buffer = Buffer as any;
