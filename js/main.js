@@ -1,6 +1,6 @@
-import { view} from "./view.ts";
+import { View} from "./view.ts";
 
-const v = view(50, 50);
+const view = new View(50, 50);
 const arr = [
 " ___________________________",
 "|:''''''''''''''''''''''''':|",

@@ -1,26 +1,33 @@
-// Type for Tag properties
-export type Tag = {
-  new(str: string, x: number): Tag;
+// Interface defining the Tag structure
+export interface Tag {
   str: string;
   x: number;
-  insert(this: Tag, str: string): string;
-  getString(this: Tag): string;
-  getX(this: Tag): number;
-};
-
-// Tag constructor
-function Tag(this: Tag, x: number = 0, str: string) {
-  this.str = str;
-  this.x = x;
+  insert(str: string): string;
+  getString(): string;
+  getX(): number;
 }
 
-Tag.prototype.insert = function(this: Tag, str: string){
+// Class implementing the Tag interface
+export class Tag implements Tag {
+  str: string;
+  x: number;
+
+  constructor(x: number = 0, str: string) {
+    this.str = str;
+    this.x = x;
+  }
+
+  insert(str: string): string {
     return str.slice(0, this.getX()) + this.getString() + str.slice(this.getX());
-}
-Tag.prototype.getString = function(this: Tag): string{
+  }
+
+  getString(): string {
     return this.str;
-}
-Tag.prototype.getX = function(this: Tag): number{
+  }
+
+  getX(): number {
     return this.x;
+  }
 }
-export const tag: Tag = Tag as any
+
+//export type TagConstructor = new (x: number, str: string) => Tag;

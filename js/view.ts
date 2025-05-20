@@ -1,35 +1,38 @@
-import { buffer, Buffer } from "./buffer.ts";
-import { viewport, Viewport } from "./viewport.ts";
+import { Buffer } from "./buffer.ts";
+import { Viewport} from "./viewport.ts";
 
-// Type for View properties
-export type View = {
-  new(width: number, height: number): View;
+// Interface defining the View structure
+export interface View {
   width: number;
   height: number;
-  buffer: Buffer;
+  buf: Buffer;
   viewport: Viewport;
-  render(this: View): boolean;
-};
-
-
-// View constructor
-function View(this: View, width: number, height: number) {
-  this.width = width;
-  this.height = height;
-  this.buffer = new buffer(this);
-  this.viewport = new viewport(this, "main");
+  render(): boolean;
 }
 
-// View prototype method
-View.prototype.render = function(this: View): boolean {
-    const element = this.viewport.getInstance();
-    if(element == null)
-        return false;
-    element.innerHTML = this.buffer.flush();
-    return true;
-  // fetching the cloned_buf tags and creating them.
-  // rather than clearing the whole screen or overwriting constant elements like texts that haven't been modified,
-  // only the modified regions should be overwritten.
-};
+// Class implementing the View interface
+export class View implements View {
+  width: number;
+  height: number;
+  buf: Buffer;
+  viewport: Viewport;
 
-export const view: View = View as any;
+  constructor(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+    this.buf = new Buffer(this);
+    this.viewport = new viewport(this, "main");
+  }
+
+  render(): boolean {
+    const element = this.viewport.getInstance();
+    if (element == null) {
+      return false;
+    }
+    element.innerHTML = this.buf.flush();
+    return true;
+    // fetching the cloned_buf tags and creating them.
+    // rather than clearing the whole screen or overwriting constant elements like texts that haven't been modified,
+    // only the modified regions should be overwritten.
+  }
+}
