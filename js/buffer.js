@@ -1,4 +1,3 @@
-import { View } from "./view.js";
 import { Tag } from "./tag.js";
 
 // Buffer constructor
@@ -7,7 +6,7 @@ import { Tag } from "./tag.js";
     * @param {number} height - The height of the buffer.
     * @type {Object} Buffer - Stores, adds and remove data as needed from the buffer.
     * @property {string[]} buf - The buffer, where text data stored in rows.
-    * @property {tag[][]} tags - The tags buffer is two dimensional buffer where being stored the html elements. These elements will be embedded in the buffer and processed by the html.
+    * @property {Tag[][]} tags - The tags buffer is two dimensional buffer where being stored the html elements. These elements will be embedded in the buffer and processed by the html.
     * @property {links[][]} links - Not implemented yet.
     */
 export function Buffer(width, height) {
@@ -56,19 +55,6 @@ Buffer.prototype.resize = function(newWidth, newHeight) {
         this.tags.splice(this.tags.length - (oldHeight - newHeight), oldHeight - newHeight);
         this.buf.splice(this.tags.length - (oldHeight - newHeight), oldHeight - newHeight);
     }
-    //
-    // if(newWidth > oldWidth){
-    //     for(let i = 0; i < newHeight; i++){
-    //         for(let _ = oldWidth; _ < newWidth; _++){
-    //             this.buf[i] += " ";
-    //         }
-    //     }
-    // }
-    // else {
-    //     for(let i = 0; i < newHeight; i++){
-    //         this.buf[i] = this.buf[i].substring(0, newWidth);
-    //         }
-    //     }
     return true;
 }
 
@@ -83,7 +69,7 @@ Buffer.prototype.resize = function(newWidth, newHeight) {
     * @returns {boolean} - Returns a boolean indicating whether the operation successed.
     */
 Buffer.prototype.addAsciiButton = function(x1, x2, y, attr = "") {
-    return this.addTwoTags(x1, x2, y, "span class=\"asciiButton " + attr + "\">", "</span");
+    return this.addTwoTags(x1, x2, y, "<span class=\"asciiButton " + attr + "\">", "</span>");
 }
 /**
     * Inserts bold tags to the html.
@@ -105,7 +91,7 @@ Buffer.prototype.addBold = function(x1, x2, y) {
     * @returns {boolean} - Returns a boolean indicating whether the operation successed.
     */
 Buffer.prototype.addTwoTags = function(x1, x2, y, tag1, tag2) {
-    if(this.addTag(new tag(x1, tag1), y) == false || this.addTag(new tag(x2, tag2), y) == false)
+    if(this.addTag(new Tag(x1, tag1), y) == false || this.addTag(new Tag(x2, tag2), y) == false)
         return false;
     return true;
 }
@@ -116,10 +102,10 @@ Buffer.prototype.addTwoTags = function(x1, x2, y, tag1, tag2) {
     * @returns {boolean} - Returns a boolean indicating whether the operation successed.
     */
 Buffer.prototype.addTag = function(tag, y) {
-    if (y < 0 || y >= this.view.height) {
+    if (y < 0 || y >= this.height) {
       return false;
     }
-    if (tag.x < 0 || tag.x > this.view.width) {
+    if (tag.x < 0 || tag.x > this.width) {
       return false;
     }
     if (!this.tags[y] || this.tags[y].length === 0) {
@@ -145,6 +131,11 @@ Buffer.prototype.addTag = function(tag, y) {
     * @param {number} y - What line its being written
     * @returns {boolean} - Returns a boolean indicating whether the operation successed.
     */
+
+String.prototype.replaceAt = function(index, text){
+    return this.substring(0, index) + text + this.substring(index + text.length);
+};
+
 Buffer.prototype.write = function(str, x, y) {
     let indexFirst = 0;
     let indexLast = str.length;
@@ -165,7 +156,7 @@ Buffer.prototype.write = function(str, x, y) {
       return false;
     }
 
-    this.buf[y] = this.buf[y].slice(0, x) + str + this.buf[y].slice(x + 1);
+    this.buf[y] = this.buf[y].replaceAt(x + indexFirst, str.substring(indexFirst, indexLast));
 
     return true;
 };

@@ -1,7 +1,7 @@
 import { View} from "./view.js";
 
 // Main execution code
-const myView = new View(5, 10);
+const myView = new View(30, 10);
 const arr = String.raw`
     _____________________________
     |:''''''''''''''''''''''''':|
@@ -20,7 +20,7 @@ const arr = String.raw`
     |:.........................:|
     |___________________________|
 `.split("\n").filter(line => line.trim() !== "");
-myView.buffer.writeArray(arr, 0, 0);
-myView.buffer.resize(5, 10);
+myView.buffer.writeArray(arr, 5, 5);
+myView.buffer.addBold(0, 30, 7);
 const success = myView.render();
 console.log("Render successful:", success);
