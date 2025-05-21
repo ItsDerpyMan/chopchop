@@ -27,6 +27,7 @@ export class Buffer implements Buffer {
     this.view = view;
     this.buf = [];
     this.tags = [];
+    this.init(view.width, view.height);
   }
 
   init(width: number = 0, height: number = 0): void {
@@ -85,7 +86,7 @@ export class Buffer implements Buffer {
   }
 
   addTwoTags(x1: number, x2: number, y: number, tag1: string, tag2: string): boolean {
-    if (this.addTag(new tag(x1, tag1), y) === false || this.addTag(new tag(x2, tag2), y) === false) {
+    if (this.addTag(new Tag(x1, tag1), y) === false || this.addTag(new Tag(x2, tag2), y) === false) {
       return false;
     }
     return true;

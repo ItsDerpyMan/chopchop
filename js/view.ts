@@ -21,7 +21,7 @@ export class View implements View {
     this.width = width;
     this.height = height;
     this.buf = new Buffer(this);
-    this.viewport = new viewport(this, "main");
+    this.viewport = new Viewport(this, "main");
   }
 
   render(): boolean {

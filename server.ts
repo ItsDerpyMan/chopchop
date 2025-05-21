@@ -1,5 +1,5 @@
 // server.ts
-import { serve } from "https://deno.land/std@0.140.0/http/server.ts";
+import { serve } from "serve";
 
 const handler = (req: Request) => {
     const url = new URL(req.url);
