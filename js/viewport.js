@@ -1,13 +1,9 @@
-import { View } from "./view.js";
-
 // Location constructor
 /**
     *
-    * @param {View} view
     * @param {string} loc - location
     */
-export function Viewport(view, loc) {
-  this.view = view;
+export function Viewport(loc) {
   this.location = loc;
   this.hasBeenInitialized = function(){
     const element = document.getElementById(this.location);
