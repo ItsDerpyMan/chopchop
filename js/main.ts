@@ -23,7 +23,13 @@ interface Buffer {
   resize(newWidth: number, newHeight: number): boolean;
   addAsciiButton(x1: number, x2: number, y: number, Attr?: string): boolean;
   addBold(x1: number, x2: number, y: number): boolean;
-  addTwoTags(x1: number, x2: number, y: number, tag1: string, tag2: string): boolean;
+  addTwoTags(
+    x1: number,
+    x2: number,
+    y: number,
+    tag1: string,
+    tag2: string,
+  ): boolean;
   addTag(tag: Tag, y: number): boolean;
   write(str: string, x: number, y: number): boolean;
   writeArray(arr: string[], x: number, y: number): void;
@@ -49,7 +55,8 @@ class Tag implements Tag {
   }
 
   insert(str: string): string {
-    return str.slice(0, this.getX()) + this.getString() + str.slice(this.getX());
+    return str.slice(0, this.getX()) + this.getString() +
+      str.slice(this.getX());
   }
 
   getString(): string {
@@ -95,86 +102,116 @@ class Buffer implements Buffer {
     this.tags = [];
     this.resize(view.width, view.height);
   }
-    private setSize(width: number, height: number): boolean{
-        if(width < 0 || height < 0 )
-            return false;
-        this.view.width = width;
-        this.view.height = height;
-        return true;
+  private setSize(width: number, height: number): boolean {
+    if (width < 0 || height < 0) {
+      return false;
+    }
+    this.view.width = width;
+    this.view.height = height;
+    return true;
+  }
+
+  public resize(
+    newWidth: number,
+    newHeight: number,
+    character: string = " ",
+  ): boolean {
+    // We store the old size
+    let oldWidth = this.view.width;
+    let oldHeight = this.view.height;
+
+    // We check if the character is correct, return false if it isn't
+    if (character.length != 1) {
+      return false;
     }
 
-    public resize(newWidth: number, newHeight: number, character: string = " "): boolean{
-        // We store the old size
-        let oldWidth = this.view.width;
-        let oldHeight = this.view.height;
-
-        // We check if the character is correct, return false if it isn't
-        if(character.length != 1)
-            return false;
-
-        // We try to change the size, return false if failure
-        if(this.setSize(newWidth, newHeight) == false)
-            return false;
-
-        // We resize the height
-        if(newHeight > oldHeight){ // If the new height is higher
-            for(let i = oldHeight; i < newHeight; i++){ // We add the lines corresponding to the new height
-                // We resize the tags
-                this.tags.push([]);
-
-                // We resize the buf
-                this.buf.push("");
-                // If the new width is higher
-                if(newWidth > oldWidth){
-                    for(let j = 0; j < oldWidth; j++){ // We fill the new lines from 0 to the old width
-                        this.buf[i] += character;
-                    }
-                }
-                // Else, if the old width is higher
-                else if(oldWidth > newWidth){
-                    for(let j = 0; j < newWidth; j++){ // We fill the new lines from 0 to the new width
-                        this.buf[i] += character;
-                    }
-                }
-            }
-        }
-        else if(oldHeight > newHeight){ // Else, if the old height was higher
-            // We resize the tags
-            this.tags.splice(this.tags.length - (oldHeight - newHeight), oldHeight - newHeight); // We remove some lines to reduce the height
-
-            // We resize the buf
-            this.buf.splice(this.buf.length - (oldHeight - newHeight), oldHeight - newHeight); // We remove some lines to reduce the height
-        }
-
-        // We resize the width
-        if(newWidth > oldWidth){ // If the new width is higher
-            // We add characters at the end of the lines (lines 0 to new height)
-            for(let i = 0; i < newHeight; i++){
-                for(let j = oldWidth; j < newWidth; j++){
-                    this.buf[i] += character;
-                }
-            }
-        }
-        else if(oldWidth > newWidth){ // Else, if the old width was higher
-            // We each line (0 to new height), we only keep the beginning of the string
-            for(let i = 0; i < newHeight; i++){
-                this.buf[i] = this.buf[i].substr(0, newWidth);
-            }
-        }
-
-        // And we return true
-        return true;
+    // We try to change the size, return false if failure
+    if (this.setSize(newWidth, newHeight) == false) {
+      return false;
     }
-  addAsciiButton(x1: number, x2: number, y: number, Attr: string = ""): boolean {
-    return this.addTwoTags(x1, x2, y, String.raw`<span class="asciiButton ${Attr}">`, String.raw`</span`);
+
+    // We resize the height
+    if (newHeight > oldHeight) { // If the new height is higher
+      for (let i = oldHeight; i < newHeight; i++) { // We add the lines corresponding to the new height
+        // We resize the tags
+        this.tags.push([]);
+
+        // We resize the buf
+        this.buf.push("");
+        // If the new width is higher
+        if (newWidth > oldWidth) {
+          for (let j = 0; j < oldWidth; j++) { // We fill the new lines from 0 to the old width
+            this.buf[i] += character;
+          }
+        } // Else, if the old width is higher
+        else if (oldWidth > newWidth) {
+          for (let j = 0; j < newWidth; j++) { // We fill the new lines from 0 to the new width
+            this.buf[i] += character;
+          }
+        }
+      }
+    } else if (oldHeight > newHeight) { // Else, if the old height was higher
+      // We resize the tags
+      this.tags.splice(
+        this.tags.length - (oldHeight - newHeight),
+        oldHeight - newHeight,
+      ); // We remove some lines to reduce the height
+
+      // We resize the buf
+      this.buf.splice(
+        this.buf.length - (oldHeight - newHeight),
+        oldHeight - newHeight,
+      ); // We remove some lines to reduce the height
+    }
+
+    // We resize the width
+    if (newWidth > oldWidth) { // If the new width is higher
+      // We add characters at the end of the lines (lines 0 to new height)
+      for (let i = 0; i < newHeight; i++) {
+        for (let j = oldWidth; j < newWidth; j++) {
+          this.buf[i] += character;
+        }
+      }
+    } else if (oldWidth > newWidth) { // Else, if the old width was higher
+      // We each line (0 to new height), we only keep the beginning of the string
+      for (let i = 0; i < newHeight; i++) {
+        this.buf[i] = this.buf[i].substr(0, newWidth);
+      }
+    }
+
+    // And we return true
+    return true;
+  }
+  addAsciiButton(
+    x1: number,
+    x2: number,
+    y: number,
+    Attr: string = "",
+  ): boolean {
+    return this.addTwoTags(
+      x1,
+      x2,
+      y,
+      String.raw`<span class="asciiButton ${Attr}">`,
+      String.raw`</span`,
+    );
   }
 
   addBold(x1: number, x2: number, y: number): boolean {
     return this.addTwoTags(x1, x2, y, "<b>", "</b>");
   }
 
-  addTwoTags(x1: number, x2: number, y: number, tag1: string, tag2: string): boolean {
-    if (this.addTag(new Tag(x1, tag1), y) === false || this.addTag(new Tag(x2, tag2), y) === false) {
+  addTwoTags(
+    x1: number,
+    x2: number,
+    y: number,
+    tag1: string,
+    tag2: string,
+  ): boolean {
+    if (
+      this.addTag(new Tag(x1, tag1), y) === false ||
+      this.addTag(new Tag(x2, tag2), y) === false
+    ) {
       return false;
     }
     return true;
@@ -265,7 +302,10 @@ class Viewport implements Viewport {
 
   createInstance(): boolean {
     if (!this.hasBeenInitialized()) {
-      document.body.appendChild(document.createElement("pre")).setAttribute("id", this.location);
+      document.body.appendChild(document.createElement("pre")).setAttribute(
+        "id",
+        this.location,
+      );
       return true;
     }
     return false;
@@ -298,7 +338,7 @@ const arr = String.raw`
     |:         '-...-'         :|
     |:.........................:|
     |___________________________|
-`.split("\n").filter(line => line.trim() !== "");
+`.split("\n").filter((line) => line.trim() !== "");
 
 myView.buffer.resize(5, 5);
 myView.buffer.writeArray(arr, 0, 0);

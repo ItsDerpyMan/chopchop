@@ -13,7 +13,7 @@ const options: esbuild.BuildOptions = {
   sourcemap: watch ? "inline" : false, // Sourcemaps for dev
   target: ["es2020", "chrome90", "firefox90"], // Modern browser targets
   logLevel: "info", // Show build info
-  external: ["deno-dom"]
+  external: ["deno-dom"],
 };
 
 if (watch) {

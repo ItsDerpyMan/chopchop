@@ -10,6 +10,7 @@
     "esbuild": "https://deno.land/x/esbuild@v0.24.0/mod.js",
     "fast-equals": "npm:fast-equals@^5.2.2",
     "random-seed-generator": "npm:random-seed-generator@^0.0.7",
+    "seedrandom": "npm:seedrandom@^3.0.5",
     "serve": "https://deno.land/std@0.140.0/http/server.ts",
     "deno-dom": "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts"
   },

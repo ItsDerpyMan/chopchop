@@ -1,51 +1,63 @@
-import { randomSeeded } from "@std/random"
-import { Entity, EntityData } from "./world.ts";
+import { randomSeeded } from "@std/random";
+import { randomIntegerBetween as rng} from "@std/random";
+
+import { entityData } from "./world.ts";
 import { Position } from "./components.ts";
 
-export type Chunk = Map<string, Entity>
+export type chunks = Map<string, chunk>;
+export type chunk = entityData[];
 
-const tree_gen: number = 10;
-const rock_gen: number = 6;
-const set_seed: bigint = 2n;
+// - depricated
+// const chances: outcome<entityData>[] = [
+//   { outcome: { asset: "|", components: new Set([{ type_name: "Position", data: { x: 0, y: 0 } }]) }, chance: tree_gen }, // Tree
+//   { outcome: { asset: "o", components: new Set([{ type_name: "Position", data: { x: 0, y: 0 } }]) }, chance: rock_gen }, // Rock
+// ];
+//
+// interface outcome<T>{
+//     outcome: T,
+//     chance: number,
+// }
+// - depricated
+// function rollEntity<T>(outcomes: outcome<T>[], seed: bigint): T | null {
+//     const rng = randomSeeded(seed);
+//     let roll = rng() * 100;
+//
+//     let cumulative = 0;
+//     for(const { outcome, chance } of outcomes) {
+//         cumulative += chance;
+//         if(roll <= cumulative){
+//             return outcome;
+//         }
+//     }
+//     return null
+// }
 
-const chances: outcome<EntityData>[] = [
-  { outcome: { asset: "|", components: new Set([{ type_name: "Position", data: { x: 0, y: 0 } }]) }, chance: tree_gen }, // Tree
-  { outcome: { asset: "#", components: new Set([{ type_name: "Position", data: { x: 0, y: 0 } }]) }, chance: rock_gen }, // Rock
-];
+String.prototype.hashCode = function (): number {
+  let hash = 5381;
+  for (let i = 0; i < this.length; i++) {
+    hash = (hash * 33) ^ this.charCodeAt(i);
+  }
+  return hash >>> 0;
+};
 
-interface outcome<T>{
-    outcome: T,
-    chance: number,
-}
+export function genChunk(
+  chunkx: number,
+  chunky: number,
+  chunk_size: number,
+): chunk {
+  const chunk: chunk = [];
+  const seed = `${chunkx},${chunky}`.hashCode();
+  console.log(seed);
+  const random = randomSeeded(BigInt(seed));
 
-function rollEntity<T>(outcomes: outcome<T>[], seed: bigint): T | null {
-    const rng = randomSeeded(seed);
-    let roll = rng() * 100;
-
-    let cumulative = 0;
-    for(const { outcome, chance } of outcomes) {
-        cumulative += chance;
-        if(roll <= cumulative){
-            return outcome;
-        }
-    }
-    return null
-}
-export function genChunk(chunkx: number, chunky: number, chunk_size: number): Entity {
-    const seed = set_seed + BigInt(chunkx * 1000 + chunky);
-    const entities: Entity = new Map();
-
-    for (let i = 0; i < chunk_size; i++) {
-        const entitySeed = seed + BigInt(i);
-        const data  = rollEntity<EntityData>(chances, entitySeed);
-        if (data != null) {
-            const x = Math.floor(randomSeeded(entitySeed)() * chunk_size);
-            const y = Math.floor(randomSeeded(entitySeed + 1n)() * chunk_size);
-            const pos: Position = new Position(x, y)
-            data.components = new Set([pos]);
-            entities.set(i, data);
-          };
-        }
-
-     return entities;
+  for (let i = 0; i < rng(5, 10, random); i++) {
+    const x = rng(0, chunk_size - 1, random);
+    const y = rng(0, chunk_size - 1, random);
+    const entityData: entityData = {
+      asset: ["|", "o"][rng(0, 1, random)], // todo => not seed based generation, may need to change the random lib.
+      components: new Set([new Position(x, y)]),
+    };
+    chunk.push(entityData);
+  }
+  return chunk;
 }

@@ -1,98 +1,122 @@
 import { Component, Position } from "./components.ts";
-import { Chunk, genChunk } from "./world_gen.ts";
+import { chunk, chunks, genChunk } from "./world_gen.ts";
 
-export type Entity = Map<number, EntityData>;
-export type Player = Map<number, EntityData >;
+export type Entity = Map<number, entityData>;
+export type Player = Map<number, entityData>;
 
-export type EntityData = {
-    asset: string | string[],
-    components: Set<Component>,
+export type entityData = {
+  asset: string | string[];
+  components: Set<Component>;
+};
+function getPosition(entity: entityData): undefined | Position {
+  if (entity.components.size === 0) {
+    return undefined;
+  }
+  if (!entity.components.has(Position)) {
+    return undefined;
+  }
+  return entity.components.values().find((c: Component) =>
+    c instanceof Position
+  );
 }
+
 export interface System {
-  requiredComponents: (new (...args: any[]) => Component)[];// Component types needed, e.g., ["position", "moving"]
-  update: (entities: Entity | Player | undefined, world: World) => void;
+  requiredComponents: (new (...args: any[]) => Component)[]; // Component types needed, e.g., ["position", "moving"]
+  update: (chunk: chunk | Player | undefined, world: World) => void;
 }
 
 export class World {
-    world: Chunk = new Map();
-    players: Player = new Map();
-    render_radius: number = 1; // 3x3
-    preload_radius: number = 2;
-    systems: System[] = [];
-    width: number = 0;
-    height: number = 0;
-    chunk_size: number = 16;
-    updated_entities: Entity = new Map() ;
+  private world: chunks = new Map();
+  private players: Player = new Map();
+  private render_radius: number = 1; // 3x3
+  private preload_radius: number = 2;
+  private systems: System[] = [];
+  private chunk_size: number = 16;
 
-constructor() {
-    this.resize(20, 20);
+  constructor() {
     this.initSystem(Position.createSystem()); // Use static method
     // this.initSystem(this.boundingBoxSystem());
     // this.initSystem(this.movingSystem());
     // this.initSystem(this.healthSystem());
     // this.initSystem(this.attackSystem());
-    this.addPlayer();
-    this.update(new Position(0, 100));
-    }
-
-  resize(width: number, height: number): void {
-    this.width = width;
-    this.height = height;
   }
-  initSystem(system: System): void {
+
+  private initSystem(system: System): void {
     this.systems.push(system);
   }
-  addPlayer(){
-    this.players.set(this.players.size + 1, { asset: '@', components: new Set<Component>().add(new Position(0, 0))});
+  public addPlayer() {
+    const new_player: entityData = {
+       asset: '@' ,
+       components: new Set<Component>([new Position(0, 0)])
+    }
+    this.players.set(this.players.size + 1, new_player);
   }
-  update(player_pos: Position): boolean {
-    if(this.players.size === 0)
-        return false;
-
-    const chunkx = Math.floor(player_pos.x / this.chunk_size);
-    const chunky = Math.floor(player_pos.y / this.chunk_size);
-    this.loadChunks(chunkx, chunky);
-
-    // Update players
-    for (const system of this.systems) {
-        system.update(this.players, this); // updating the players
-        system.update(this.world.get(player_pos.toKey()), this); // updating the World
+  public update() {
+      this.loadChunks();
+      for (const [_, chunk] of this.world) {
+        for (const system of this.systems) {
+          system.update(chunk, this);
+        }
+      }
+      for (const system of this.systems) {
+        system.update(this.players, this);
+      }
     }
 
-    // Update chunks in render radius
-    for (let dx = -this.render_radius; dx <= this.render_radius; dx++) {
-      for (let dy = -this.render_radius; dy <= this.render_radius; dy++) {
-        const pos = new Position(chunkx + dx, chunky + dy);
-        const chunk = this.world.get(pos.toKey());
-        if (chunk) {
-          for (const system of this.systems) {
-            system.update(this.world.get(pos.toKey()), this);
+  private getChunks(player_id: number): chunks | null{
+        const d: entityData | undefined = this.players.get(player_id);
+        if(!d)
+            return null;
+
+        const pos = d.components.values().find((c) => c instanceof Position) as Position;
+        if(!pos)
+            return null;
+
+        const chunkx = Math.floor(pos.x / this.chunk_size);
+        const chunky = Math.floor(pos.y / this.chunk_size);
+
+        const chunks: chunks = new Map();
+        for(let dx = 0; dx <= this.render_radius; dx++){
+            for(let dy = 0; dy <= this.render_radius; dy++){
+                const key = `${chunkx + dx},${chunky + dy}`
+                const chunk = this.world.get(key);
+                if(chunk) chunks.set(key, chunk);
+            }
+        }
+
+        return chunks;
+    }
+
+  private loadChunks(): void {
+    const chunks = new Set<string>();
+
+    for (const [playerId, entityData] of this.players) {
+      const position = entityData.components.values().find((c: Component) =>
+        c instanceof Position
+      ) as Position;
+      if (!position) continue;
+
+      const chunkX = Math.floor(position.x / this.chunk_size);
+      const chunkY = Math.floor(position.y / this.chunk_size);
+
+      for (let dx = -this.preload_radius; dx < this.preload_radius; dx++) {
+        for (let dy = -this.preload_radius; dy < this.preload_radius; dy++) {
+          const key = `${chunkX + dx},${chunkY + dy}`;
+          chunks.add(key);
+          if (!this.world.has(key)) {
+            this.world.set(
+              key,
+              genChunk(chunkX + dx, chunkY + dy, this.chunk_size),
+            );
           }
         }
       }
     }
-    return true;
-  }
-  private loadChunks(chunkx: number, chunky: number): void {
-      const newChunks = new Set<string>();
 
-      for (let dx = -this.preload_radius; dx <= this.preload_radius; dx++) {
-        for (let dy = -this.preload_radius; dy <= this.preload_radius; dy++) {
-            const pos = new Position(chunkx + dx, chunky + dy);
-
-          // Generate chunk if not loaded
-          if (!this.world.has(pos.toKey())) {
-            this.world.set(pos.toKey(), genChunk(pos.x, pos.y, this.chunk_size));
-          }
-          newChunks.add(`${pos.x},${pos.y}`);
-        }
+    for (const key of this.world.keys()) {
+      if (!chunks.has(key)) {
+        this.world.delete(key);
       }
-
-      // Unload chunks outside preload radius
-      for (const pos of this.world.keys()) {
-          if (!newChunks.has(pos)) {
-            this.world.delete(pos);
-          }
-        }
     }
+  }
 }
