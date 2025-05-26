@@ -1,12 +1,8 @@
-import { randomSeeded } from "@std/random";
+import { randomSeeded, RandomOptions } from "@std/random";
 import { randomIntegerBetween as rng} from "@std/random";
 
-import { entityData } from "./world.ts";
+import { entityData, chunk} from "./world.ts";
 import { Position } from "./components.ts";
-
-export type chunks = Map<string, chunk>;
-export type chunk = entityData[];
-
 // - depricated
 // const chances: outcome<entityData>[] = [
 //   { outcome: { asset: "|", components: new Set([{ type_name: "Position", data: { x: 0, y: 0 } }]) }, chance: tree_gen }, // Tree
@@ -49,13 +45,14 @@ export function genChunk(
   const seed = `${chunkx},${chunky}`.hashCode();
   console.log(seed);
   const random = randomSeeded(BigInt(seed));
+  const option: RandomOptions = { prng: () => random() };
 
-  for (let i = 0; i < rng(5, 10, random); i++) {
-    const x = rng(0, chunk_size - 1, random);
-    const y = rng(0, chunk_size - 1, random);
+  for (let i = 0; i < rng(5, 10, option); i++) {
+    const x = rng(0, chunk_size - 1, option);
+    const y = rng(0, chunk_size - 1, option);
     const entityData: entityData = {
-      asset: ["|", "o"][rng(0, 1, random)], // todo => not seed based generation, may need to change the random lib.
-      components: new Set([new Position(x, y)]),
+      asset: ["|", "o"][rng(0, 1, option)],
+      components: new Map([[ "position", new Position(x, y) ]]),
     };
     chunk.push(entityData);
   }

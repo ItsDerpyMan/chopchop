@@ -1,56 +1,51 @@
-import { Component, Position } from "./components.ts";
-import { chunk, chunks, genChunk } from "./world_gen.ts";
+import { Component, System, Position, Health } from "./components.ts";
+import { genChunk } from "./world_gen.ts";
 
 export type Entity = Map<number, entityData>;
-export type Player = Map<number, entityData>;
-
+export type Player = Map<WebSocket, entityData>;
+export type chunks = Map<string, chunk>;
+export type chunk = entityData[];
 export type entityData = {
   asset: string | string[];
-  components: Set<Component>;
+  components: Map<string, Component>;
 };
-function getPosition(entity: entityData): undefined | Position {
-  if (entity.components.size === 0) {
-    return undefined;
-  }
-  if (!entity.components.has(Position)) {
-    return undefined;
-  }
-  return entity.components.values().find((c: Component) =>
-    c instanceof Position
-  );
-}
 
-export interface System {
-  requiredComponents: (new (...args: any[]) => Component)[]; // Component types needed, e.g., ["position", "moving"]
-  update: (chunk: chunk | Player | undefined, world: World) => void;
+export function hasComponent(entity: entityData, component: string): boolean {
+  return entity.components.has(component);
 }
 
 export class World {
   private world: chunks = new Map();
-  private players: Player = new Map();
+  public players: Player = new Map();
   private render_radius: number = 1; // 3x3
   private preload_radius: number = 2;
-  private systems: System[] = [];
-  private chunk_size: number = 16;
+  public systems: System[] = [];
+  public chunk_size: number = 16;
 
   constructor() {
-    this.initSystem(Position.createSystem()); // Use static method
+    this.initSystem(Position.create());
     // this.initSystem(this.boundingBoxSystem());
     // this.initSystem(this.movingSystem());
-    // this.initSystem(this.healthSystem());
+    this.initSystem(Health.create());
     // this.initSystem(this.attackSystem());
   }
 
   private initSystem(system: System): void {
     this.systems.push(system);
   }
-  public addPlayer() {
+
+  public addPlayer(id: WebSocket): boolean {
+    if (this.players.has(id)) {
+      return false;
+    }
     const new_player: entityData = {
        asset: '@' ,
-       components: new Set<Component>([new Position(0, 0)])
-    }
-    this.players.set(this.players.size + 1, new_player);
+       components: new Map([[ "position", new Position(0, 0) ]]),
+    };
+    this.players.set(id, new_player);
+    return true;
   }
+
   public update() {
       this.loadChunks();
       for (const [_, chunk] of this.world) {
@@ -63,15 +58,18 @@ export class World {
       }
     }
 
-  private getChunks(player_id: number): chunks | null{
-        const d: entityData | undefined = this.players.get(player_id);
-        if(!d)
+  public getChunks(id: WebSocket): chunks | null{
+        if(!this.players.has(id)){
             return null;
-
-        const pos = d.components.values().find((c) => c instanceof Position) as Position;
-        if(!pos)
+        }
+        const d: entityData | undefined = this.players.get(id);
+        if(!d){
             return null;
-
+        }
+        const pos = d.components.get("position") as Position;
+        if(!pos){
+            return null;
+        }
         const chunkx = Math.floor(pos.x / this.chunk_size);
         const chunky = Math.floor(pos.y / this.chunk_size);
 
@@ -90,10 +88,8 @@ export class World {
   private loadChunks(): void {
     const chunks = new Set<string>();
 
-    for (const [playerId, entityData] of this.players) {
-      const position = entityData.components.values().find((c: Component) =>
-        c instanceof Position
-      ) as Position;
+    for (const [_, entityData] of this.players) {
+      const position = entityData.components.get("position") as Position;
       if (!position) continue;
 
       const chunkX = Math.floor(position.x / this.chunk_size);
