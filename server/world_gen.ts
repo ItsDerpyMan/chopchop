@@ -1,8 +1,9 @@
-import { randomSeeded, RandomOptions } from "@std/random";
-import { randomIntegerBetween as rng} from "@std/random";
+import { RandomOptions, randomSeeded } from "@std/random";
+import { randomIntegerBetween as rng } from "@std/random";
 
-import { entityData, chunk} from "./world.ts";
+import { chunk, entityData } from "./world.ts";
 import { Position } from "./components.ts";
+
 // - depricated
 // const chances: outcome<entityData>[] = [
 //   { outcome: { asset: "|", components: new Set([{ type_name: "Position", data: { x: 0, y: 0 } }]) }, chance: tree_gen }, // Tree
@@ -43,7 +44,6 @@ export function genChunk(
 ): chunk {
   const chunk: chunk = [];
   const seed = `${chunkx},${chunky}`.hashCode();
-  console.log(seed);
   const random = randomSeeded(BigInt(seed));
   const option: RandomOptions = { prng: () => random() };
 
@@ -52,7 +52,7 @@ export function genChunk(
     const y = rng(0, chunk_size - 1, option);
     const entityData: entityData = {
       asset: ["|", "o"][rng(0, 1, option)],
-      components: new Map([[ "position", new Position(x, y) ]]),
+      components: new Map([["position", new Position(x, y)]]),
     };
     chunk.push(entityData);
   }

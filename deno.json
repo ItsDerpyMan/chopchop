@@ -3,7 +3,7 @@
     "check": "deno check **/*.ts",
     "build": "deno run --allow-read --allow-write build.ts",
     "dev": "deno run --allow-read --allow-write build.ts --watch",
-    "start": "deno run --allow-read --allow-net server.ts"
+    "start": "deno run --allow-read --allow-net server/server.ts"
   },
   "imports": {
     "@std/random": "jsr:@std/random@^0.1.0",

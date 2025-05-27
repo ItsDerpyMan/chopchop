@@ -1,4 +1,4 @@
-import { chunk, Player, World} from "./world.ts";
+import { chunk, Player, World } from "./world.ts";
 
 export abstract class Component {}
 
@@ -19,8 +19,8 @@ export class Position extends Component {
   override toString(): string {
     return "position";
   }
-  getValues(): [number, number]{
-        return [this.x, this.y];
+  getValues(): [number, number] {
+    return [this.x, this.y];
   }
 
   static create(): System {
@@ -60,18 +60,20 @@ export class Health extends Component {
     super();
   }
   static create(): System {
-        return {
-        name: "health",
-        requiredComponents: [Health],
-        update: (entities, world): boolean => { return true}
-        }
-    }
+    return {
+      name: "health",
+      requiredComponents: [Health],
+      update: (entities, world): boolean => {
+        return true;
+      },
+    };
+  }
   override toString(): string {
     return "Health";
   }
 
-  getValues(): number{
-        return this.health
+  getValues(): number {
+    return this.health;
   }
 }
 

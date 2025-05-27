@@ -1,4 +1,4 @@
-import { Component, System, Position, Health } from "./components.ts";
+import { Component, Health, Position, System } from "./components.ts";
 import { genChunk } from "./world_gen.ts";
 
 export type Entity = Map<number, entityData>;
@@ -39,51 +39,51 @@ export class World {
       return false;
     }
     const new_player: entityData = {
-       asset: '@' ,
-       components: new Map([[ "position", new Position(0, 0) ]]),
+      asset: "@",
+      components: new Map([["position", new Position(0, 0)]]),
     };
     this.players.set(id, new_player);
     return true;
   }
 
   public update() {
-      this.loadChunks();
-      for (const [_, chunk] of this.world) {
-        for (const system of this.systems) {
-          system.update(chunk, this);
-        }
-      }
+    this.loadChunks();
+    for (const [_, chunk] of this.world) {
       for (const system of this.systems) {
-        system.update(this.players, this);
+        system.update(chunk, this);
+      }
+    }
+    for (const system of this.systems) {
+      system.update(this.players, this);
+    }
+  }
+
+  public getChunks(id: WebSocket): chunks | null {
+    if (!this.players.has(id)) {
+      return null;
+    }
+    const d: entityData | undefined = this.players.get(id);
+    if (!d) {
+      return null;
+    }
+    const pos = d.components.get("position") as Position;
+    if (!pos) {
+      return null;
+    }
+    const chunkx = Math.floor(pos.x / this.chunk_size);
+    const chunky = Math.floor(pos.y / this.chunk_size);
+
+    const chunks: chunks = new Map();
+    for (let dx = 0; dx <= this.render_radius; dx++) {
+      for (let dy = 0; dy <= this.render_radius; dy++) {
+        const key = `${chunkx + dx},${chunky + dy}`;
+        const chunk = this.world.get(key);
+        if (chunk) chunks.set(key, chunk);
       }
     }
 
-  public getChunks(id: WebSocket): chunks | null{
-        if(!this.players.has(id)){
-            return null;
-        }
-        const d: entityData | undefined = this.players.get(id);
-        if(!d){
-            return null;
-        }
-        const pos = d.components.get("position") as Position;
-        if(!pos){
-            return null;
-        }
-        const chunkx = Math.floor(pos.x / this.chunk_size);
-        const chunky = Math.floor(pos.y / this.chunk_size);
-
-        const chunks: chunks = new Map();
-        for(let dx = 0; dx <= this.render_radius; dx++){
-            for(let dy = 0; dy <= this.render_radius; dy++){
-                const key = `${chunkx + dx},${chunky + dy}`
-                const chunk = this.world.get(key);
-                if(chunk) chunks.set(key, chunk);
-            }
-        }
-
-        return chunks;
-    }
+    return chunks;
+  }
 
   private loadChunks(): void {
     const chunks = new Set<string>();
