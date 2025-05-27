@@ -148,6 +148,13 @@ String.prototype.replaceAt = function (index, text) {
   return this.substring(0, index) + text + this.substring(index + text.length);
 };
 
+Buffer.prototype.clear = function () {
+    for (let i = 0; i < this.height; i++) {
+       this.buf[i] = " ".repeat(this.width);
+       this.tags[i] = [];
+    }
+    this.resize(this.width, this.height);
+}
 Buffer.prototype.write = function (str, x, y) {
   let indexFirst = 0;
   let indexLast = str.length;

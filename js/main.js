@@ -9,22 +9,24 @@ ws.onopen = (event) => {
   console.log("Connected to the server");
   const init = (() => {
     const viewport = new Viewport("container");
-    const view_instance = new View(viewport, 100, 200);
+    const view_instance = new View(viewport, 48, 48);
     view = view_instance;
   })();
 
   console.log(view);
 };
 ws.onmessage = (event) => {
-  const update = event.data;
-  console.log(update);
+  console.log(view.buffer.buf);
+  if(view.fetchUpdate(event)){
+    view.render();
+  }
 };
 
 ws.onerror = (event) => {
   console.error("Connection error: ", error);
 };
 
-function sendCoordinates() {
+function sendPlayerCoordinates() {
     if (ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(coords));
     console.log("Sent to server:", coords);
@@ -48,6 +50,13 @@ document.addEventListener("keydown", (event) => {
       coords.x += 1;
       break;
   }
-  sendCoordinates()
+  sendPlayerCoordinates()
 });
-window.sendCoordinates = sendCoordinates;
+window.sendCoordinates = function() {
+  const x = parseFloat(document.getElementById("x-coord").value);
+  const y = parseFloat(document.getElementById("y-coord").value);
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ x, y }));
+  }
+};
+window.view = view;

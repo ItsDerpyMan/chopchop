@@ -90,8 +90,9 @@ export class World {
 
     for (const [_, entityData] of this.players) {
       const position = entityData.components.get("position") as Position;
-      if (!position) continue;
-
+      if (!position) {
+        console.log("Player doesnot have position component");
+      }
       const chunkX = Math.floor(position.x / this.chunk_size);
       const chunkY = Math.floor(position.y / this.chunk_size);
 
@@ -99,6 +100,7 @@ export class World {
         for (let dy = -this.preload_radius; dy < this.preload_radius; dy++) {
           const key = `${chunkX + dx},${chunkY + dy}`;
           chunks.add(key);
+          console.log(`chunk: ${key}`);
           if (!this.world.has(key)) {
             this.world.set(
               key,
