@@ -1,5 +1,5 @@
 import { Component, Health, Position, System } from "./components.ts";
-import { genChunk } from "./world_gen.ts";
+import { genChunk, readAsciiFile} from "./world_gen.ts";
 
 export type Entity = Map<number, entityData>;
 export type Player = Map<WebSocket, entityData>;
@@ -17,8 +17,8 @@ export function hasComponent(entity: entityData, component: string): boolean {
 export class World {
   private world: chunks = new Map();
   public players: Player = new Map();
-  private render_radius: number = 1; // 3x3
-  private preload_radius: number = 2;
+  private render_width: number = 1;
+  private render_height: number = 1
   public systems: System[] = [];
   public chunk_size: number = 16;
 
@@ -29,17 +29,32 @@ export class World {
     this.initSystem(Health.create());
     // this.initSystem(this.attackSystem());
   }
-
+  public setSize(width: number, height: number): boolean{
+        if(width < 0 || height < 0){
+            return false;
+        }
+        this.render_height = height;
+        this.render_width = width;
+        return true;
+    }
   private initSystem(system: System): void {
     this.systems.push(system);
   }
 
-  public addPlayer(id: WebSocket): boolean {
+  public async addPlayer(id: WebSocket): Promise<boolean> {
     if (this.players.has(id)) {
       return false;
     }
+    const avatar = async () => {
+      try {
+        return await readAsciiFile("avatar");
+      } catch (error) {
+        console.error('Error:', error.message);
+        return "@";
+      }
+    };
     const new_player: entityData = {
-      asset: "@",
+      asset: await avatar(),
       components: new Map([["position", new Position(0, 0)]]),
     };
     this.players.set(id, new_player);
@@ -74,37 +89,35 @@ export class World {
     const chunky = Math.floor(pos.y / this.chunk_size);
 
     const chunks: chunks = new Map();
-    for (let dx = 0; dx <= this.render_radius; dx++) {
-      for (let dy = 0; dy <= this.render_radius; dy++) {
+    for (let dx = 0; dx <= this.render_width; dx++) {
+      for (let dy = 0; dy <= this.render_height; dy++) {
         const key = `${chunkx + dx},${chunky + dy}`;
         const chunk = this.world.get(key);
         if (chunk) chunks.set(key, chunk);
       }
     }
-
     return chunks;
   }
 
-  private loadChunks(): void {
+  private async loadChunks(): Promise<void> {
     const chunks = new Set<string>();
 
-    for (const [_, entityData] of this.players) {
-      const position = entityData.components.get("position") as Position;
+    for (const [_, player] of this.players) {
+      const position = player.components.get("position") as Position;
       if (!position) {
         console.log("Player doesnot have position component");
       }
       const chunkX = Math.floor(position.x / this.chunk_size);
       const chunkY = Math.floor(position.y / this.chunk_size);
 
-      for (let dx = -this.preload_radius; dx < this.preload_radius; dx++) {
-        for (let dy = -this.preload_radius; dy < this.preload_radius; dy++) {
+      for (let dx = -this.render_width; dx < this.render_width; dx++) {
+        for (let dy = -this.render_height; dy < this.render_height; dy++) {
           const key = `${chunkX + dx},${chunkY + dy}`;
           chunks.add(key);
-          console.log(`chunk: ${key}`);
           if (!this.world.has(key)) {
             this.world.set(
               key,
-              genChunk(chunkX + dx, chunkY + dy, this.chunk_size),
+              await genChunk(chunkX + dx, chunkY + dy, this.chunk_size),
             );
           }
         }

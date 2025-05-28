@@ -28,6 +28,8 @@ import { Position } from "./components.ts";
 //     }
 //     return null
 // }
+const tree = readAsciiFile("tree");
+const boulder = readAsciiFile("rock");
 
 String.prototype.hashCode = function (): number {
   let hash = 5381;
@@ -37,24 +39,41 @@ String.prototype.hashCode = function (): number {
   return hash >>> 0;
 };
 
-export function genChunk(
+export async function genChunk(
   chunkx: number,
   chunky: number,
   chunk_size: number,
-): chunk {
+): Promise<chunk> {
   const chunk: chunk = [];
   const seed = `${chunkx},${chunky}`.hashCode();
   const random = randomSeeded(BigInt(seed));
   const option: RandomOptions = { prng: () => random() };
 
-  for (let i = 0; i < rng(5, 10, option); i++) {
-    const x = rng(0, chunk_size - 1, option);
-    const y = rng(0, chunk_size - 1, option);
+  for (let i = 0; i < rng(0, 2, option); i++) {
+    let x = rng(0, chunk_size - 1, option);
+    let y = rng(0, chunk_size - 1, option);
+    x = chunkx * chunk_size + x;
+    y = chunky * chunk_size + y;
     const entityData: entityData = {
-      asset: ["|", "o"][rng(0, 1, option)],
+      asset: [await tree, await boulder][rng(0, 1, option)],
       components: new Map([["position", new Position(x, y)]]),
     };
     chunk.push(entityData);
   }
   return chunk;
+}
+
+export async function readAsciiFile(filename: string): Promise<string[]> {
+  try {
+    const path = `./server/ascii/${filename.endsWith('.txt') ? filename : filename + '.txt'}`;
+    const content = await Deno.readTextFile(path);
+
+    return content
+      .split('\n')
+      .map(line => line.replace(/\r$/, ''))
+      .filter(line => line.trim() !== '');
+  } catch (error) {
+    console.error(`Error reading ASCII file ${filename}:`, error.message);
+    return [];
+  }
 }

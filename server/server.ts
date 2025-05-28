@@ -17,10 +17,18 @@ async function handleRequest(req: Request): Promise<Response> {
     try {
       const { socket, response } = Deno.upgradeWebSocket(req);
 
-      socket.onopen = () => {
+      socket.onopen = async () => {
         console.log("Client Connected");
-        if (world.addPlayer(socket)) {
+        if (await world.addPlayer(socket)) {
           world.update();
+          const player = world.players.get(socket);
+          if(player) {
+            socket.send(JSON.stringify({
+                type: "player",
+                player: player,
+            }));
+          }
+          console.log(player);
           const chunks = world.getChunks(socket);
           if (chunks) {
             socket.send(JSON.stringify({
@@ -33,23 +41,34 @@ async function handleRequest(req: Request): Promise<Response> {
         }
       };
       socket.onmessage = (event) => {
-        const { x, y } = JSON.parse(event.data);
-        const player = world.players.get(socket);
-        console.log(`${"player"} coordinates: ${x}, ${y}`)
-        if (player) {
-          const pos = player.components.get("position") as Position;
-          pos.x = x;
-          pos.y = y;
-          world.update();
-          const chunks = world.getChunks(socket);
-          if (chunks) {
-            socket.send(JSON.stringify({
-              type: "update",
-              chunks: serializeChunks(chunks, world),
-            }));
-          }
-        } else {
-          console.error("failed to parse the chunks");
+        const data = JSON.parse(event.data);
+        if (data.type === 'coords') {
+            console.log(data)
+            console.log("coords")
+            const x = data.x, y = data.y;
+            const player = world.players.get(socket);
+            console.log(`${"player"} coordinates: ${x}, ${y}`)
+            if (player) {
+              const pos = player.components.get("position") as Position;
+              pos.x = x;
+              pos.y = y;
+              world.update();
+              const chunks = world.getChunks(socket);
+              if (chunks) {
+                socket.send(JSON.stringify({
+                  type: "update",
+                  chunks: serializeChunks(chunks, world),
+                }));
+              }
+            } else {
+              console.error("failed to parse the chunks");
+            }
+        }
+        else if(data.type === 'resize'){
+            console.log(data)
+            if(world.setSize(data.width, data.height)){
+               console.log("resized");
+            }
         }
       };
 
@@ -114,17 +133,16 @@ function getContentType(filePath: string): string {
 
 function serializeChunks(chunks: chunks, world: World): any[] {
   const arr: any[] = [];
-  for (const [pos, data] of chunks.entries()) {
-    const [chunkx, chunky] = pos.split(",").map(Number);
+  for (const data of chunks.values()) {
     for (let i = 0; i < data.length; i++) {
       const pos = data[i].components.get("position") as Position;
       if (!pos) {
-        console.log("null chunk_pos");
+        console.log("null entity_pos");
       }
       let e: serialized = {
         asset: data[i].asset,
-        x: chunkx * world.chunk_size + pos.x,
-        y: chunky * world.chunk_size + pos.y,
+        x: pos.x,
+        y: pos.y,
       };
       for (const system of world.systems) {
         if (system.name.toString() != "position") {

@@ -156,15 +156,15 @@ Buffer.prototype.clear = function () {
     this.resize(this.width, this.height);
 }
 Buffer.prototype.write = function (str, x, y) {
+  if (y < 0 || y >= this.height) {
+      return false;
+  }
+
   let indexFirst = 0;
   let indexLast = str.length;
 
-  if (y < 0 || y >= this.height) {
-    return false;
-  }
-
   if (x + indexLast >= this.width) {
-    indexLast -= x + indexLast - this.width;
+    indexLast -= (x + indexLast - this.width);
   }
 
   if (x < 0) {
