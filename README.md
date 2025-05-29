@@ -21,3 +21,4 @@
 
 - "Deno task start" parancsal futatni is tudod a local szervert. Az elindulás után localhost:8000 -en meggy a weblap és ha minden fain akkor WASD-vel lehet mozogni. És nagyon remélem nem csak az én gépemen nyügszik (:
 
+![Game](./image.jpeg)
